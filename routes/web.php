@@ -1,15 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/test-db', function () {
-    try {
-        DB::connection()->getPdo();
-        return "✅ Kết nối thành công tới SQL Server!";
-    } catch (\Exception $e) {
-        return "❌ Lỗi: " . $e->getMessage();
-    }
+Route::get('/', function () {
+    return response()->json([
+        'message' => 'Laravel API is running!',
+        'timestamp' => now(),
+        'app_url' => config('app.url'),
+        'environment' => config('app.env')
+    ]);
+});
+
+Route::get('/test', function () {
+    return 'Hello World!';
 });
 
 Route::get('/debug-storage', function () {
