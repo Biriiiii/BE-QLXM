@@ -1,0 +1,33 @@
+{
+    "name": "BE-QLXM",
+    "description": "Laravel Backend for QLXM",
+    "buildpacks": [
+        {
+            "url": "heroku/php"
+        }
+    ],
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "basic"
+        }
+    },
+    "addons": [
+        {
+            "plan": "heroku-postgresql:essential-0"
+        }
+    ],
+    "env": {
+        "APP_KEY": {
+            "description": "Laravel application key",
+            "generator": "secret"
+        },
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "LOG_CHANNEL": "errorlog",
+        "DB_CONNECTION": "pgsql"
+    },
+    "scripts": {
+        "postdeploy": "php artisan migrate --force && php artisan storage:link"
+    }
+}
