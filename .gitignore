@@ -15,7 +15,8 @@
 /node_modules
 /public/build
 /public/hot
-/public/storage
+# Don't ignore public/storage as it's needed for Heroku
+# /public/storage
 /storage/*.key
 /storage/pail
 /vendor

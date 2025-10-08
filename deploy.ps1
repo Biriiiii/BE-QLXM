@@ -17,9 +17,10 @@ git push heroku main
 Write-Host "🗄️ Chạy migrations..." -ForegroundColor Blue
 heroku run php artisan migrate --force
 
-# Tạo storage link
+# Tạo storage link và kiểm tra
 Write-Host "🔗 Tạo storage link..." -ForegroundColor Magenta
 heroku run php artisan storage:link
+heroku run "ls -la public/ | grep storage"
 
 # Clear cache
 Write-Host "🧹 Clear cache..." -ForegroundColor DarkYellow
