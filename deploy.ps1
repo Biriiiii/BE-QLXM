@@ -1,34 +1,34 @@
-# Script deploy nhanh lên Heroku (PowerShell)
-Write-Host "🚀 Đang chuẩn bị deploy lên Heroku..." -ForegroundColor Green
+# Script deploy nhanh len Heroku (PowerShell)
+Write-Host "[DEPLOY] Dang chuan bi deploy len Heroku..." -ForegroundColor Green
 
-# Kiểm tra Git status
+# Kiem tra Git status
 $gitStatus = git status --porcelain
 if ($gitStatus) {
-    Write-Host "📝 Commit các thay đổi..." -ForegroundColor Yellow
+    Write-Host "[GIT] Commit cac thay doi..." -ForegroundColor Yellow
     git add .
     git commit -m "Deploy to Heroku - $(Get-Date)"
 }
 
 # Deploy
-Write-Host "🌟 Đang deploy..." -ForegroundColor Cyan
+Write-Host "[DEPLOY] Dang deploy..." -ForegroundColor Cyan
 git push heroku main
 
-# Chạy migrations
-Write-Host "🗄️ Chạy migrations..." -ForegroundColor Blue
+# Chay migrations
+Write-Host "[DB] Chay migrations..." -ForegroundColor Blue
 heroku run php artisan migrate --force
 
-# Tạo storage link và kiểm tra
-Write-Host "🔗 Tạo storage link..." -ForegroundColor Magenta
+# Tao storage link va kiem tra
+Write-Host "[STORAGE] Tao storage link..." -ForegroundColor Magenta
 heroku run php artisan storage:link
 heroku run "ls -la public/ | grep storage"
 
 # Clear cache
-Write-Host "🧹 Clear cache..." -ForegroundColor DarkYellow
+Write-Host "[CACHE] Clear cache..." -ForegroundColor DarkYellow
 heroku run php artisan config:clear
 heroku run php artisan cache:clear
 heroku run php artisan route:clear
 heroku run php artisan view:clear
 
-Write-Host "✅ Deploy hoàn thành!" -ForegroundColor Green
-Write-Host "🌐 Mở app: heroku open" -ForegroundColor White
-Write-Host "📋 Xem logs: heroku logs --tail" -ForegroundColor White
+Write-Host "[SUCCESS] Deploy hoan thanh!" -ForegroundColor Green
+Write-Host "[INFO] Mo app: heroku open" -ForegroundColor White
+Write-Host "[INFO] Xem logs: heroku logs --tail" -ForegroundColor White
