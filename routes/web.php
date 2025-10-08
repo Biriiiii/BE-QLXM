@@ -23,5 +23,18 @@ Route::get('/debug-storage', function () {
         'storage_exists' => file_exists(public_path('storage')),
         'is_link' => is_link(public_path('storage')),
         'readlink' => is_link(public_path('storage')) ? readlink(public_path('storage')) : 'not a link',
+        'app_env' => env('APP_ENV'),
+        'filesystem_disk' => config('filesystems.default'),
     ];
 });
+
+// Route để serve files từ storage trên Heroku
+Route::get('/storage/{filename}', function ($filename) {
+    $path = storage_path('app/public/' . $filename);
+
+    if (!file_exists($path)) {
+        abort(404);
+    }
+
+    return response()->file($path);
+})->where('filename', '.*');
