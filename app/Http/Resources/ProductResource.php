@@ -19,8 +19,8 @@ class ProductResource extends JsonResource
             'image' => $this->image,
             'stock' => $this->stock,
             'description' => $this->description,
-            // asset() sẽ trả URL public → không cần token
-            'image_url' => $this->image_url,
+            // Trả về link public S3 nếu có ảnh
+            'image_url' => $this->image ? Storage::disk('s3')->url($this->image) : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'brand' => $this->brand,

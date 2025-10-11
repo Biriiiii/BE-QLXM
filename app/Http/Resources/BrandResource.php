@@ -14,7 +14,8 @@ class BrandResource extends JsonResource
             'name' => $this->name,
             'country' => $this->country,
             'logo' => $this->logo,
-            'logo_url' => $this->logo_url,
+            // Trả về link public S3 nếu có logo
+            'logo_url' => $this->logo ? Storage::disk('s3')->url($this->logo) : null,
             'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
