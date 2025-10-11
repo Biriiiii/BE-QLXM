@@ -10,12 +10,17 @@ class Order extends Model
         'customer_id',
         'order_date',
         'total_amount',
+        'deposit_amount',
+        'installment_term',
+        'installment_amount',
         'status'
     ];
 
     protected $casts = [
         'order_date' => 'datetime',
         'total_amount' => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
+        'installment_amount' => 'decimal:2',
     ];
 
     public function customer()

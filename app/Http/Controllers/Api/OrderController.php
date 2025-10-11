@@ -32,14 +32,19 @@ class OrderController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1'
+            'items.*.quantity' => 'required|integer|min:1',
+            'installment_term' => 'nullable|string',
+            'installment_amount' => 'nullable|numeric|min:0',
         ]);
 
         $order = Order::create([
             'customer_id' => $data['customer_id'],
             'order_date' => now(),
-            'status' => 'pending',
-            'total_amount' => 0
+            'status' => 'pending_deposit',
+            'total_amount' => 0,
+            'deposit_amount' => 0,
+            'installment_term' => $data['installment_term'] ?? null,
+            'installment_amount' => $data['installment_amount'] ?? null,
         ]);
 
         $total = 0;
@@ -57,10 +62,14 @@ class OrderController extends Controller
             $order->items()->create([
                 'product_id' => $product->id,
                 'quantity' => $item['quantity'],
-                'price' => $product->price, // hoặc $lineTotal nếu muốn
+                'price' => $product->price,
             ]);
         }
-        $order->update(['total_amount' => $total]);
+        $deposit = round($total * 0.3, 2);
+        $order->update([
+            'total_amount' => $total,
+            'deposit_amount' => $deposit,
+        ]);
 
         return response()->json(['data' => $order], 201);
     }
