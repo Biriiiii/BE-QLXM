@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
@@ -19,7 +20,7 @@ class ProductResource extends JsonResource
             'stock' => $this->stock,
             'description' => $this->description,
             // asset() sẽ trả URL public → không cần token
-            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => $this->image_url,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'brand' => $this->brand,

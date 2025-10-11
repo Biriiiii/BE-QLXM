@@ -27,7 +27,7 @@ class BrandController extends Controller
     {
         $data = $request->validated();
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('brands', 'public');
+            $data['logo'] = $request->file('logo')->store('brands', 's3');
         }
         $brand = Brand::create($data);
         return new BrandResource($brand);
@@ -50,7 +50,7 @@ class BrandController extends Controller
         }
         $data = $request->validated();
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('brands', 'public');
+            $data['logo'] = $request->file('logo')->store('brands', 's3');
         }
         $brand->update($data);
         return new BrandResource($brand);

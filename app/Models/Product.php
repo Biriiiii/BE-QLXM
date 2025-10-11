@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -37,8 +38,17 @@ class Product extends Model
     }
 
     // Accessor cho image_url
+    /**
+     * Get the full S3 URL for the product image (IDE friendly).
+     * @return string|null
+     */
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        if ($this->image && config('filesystems.disks.s3.url')) {
+            $path = $this->image;
+            $baseUrl = config('filesystems.disks.s3.url');
+            return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
+        }
+        return null;
     }
 }

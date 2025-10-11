@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class BrandResource extends JsonResource
 {
@@ -13,7 +14,7 @@ class BrandResource extends JsonResource
             'name' => $this->name,
             'country' => $this->country,
             'logo' => $this->logo,
-            'logo_url' => $this->logo ? asset('storage/' . $this->logo) : null,
+            'logo_url' => $this->logo_url,
             'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
