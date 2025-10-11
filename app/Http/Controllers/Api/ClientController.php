@@ -7,6 +7,8 @@ use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Product;
+use \App\Http\Resources\CategoryResource;
+use \App\Http\Resources\BrandResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
 
@@ -14,22 +16,22 @@ class ClientController extends Controller
 {
     public function getCategories()
     {
-        return Category::all();
+        return CategoryResource::collection(Category::all());
     }
 
     public function getCategory($id)
     {
-        return Category::findOrFail($id);
+        return new CategoryResource(Category::findOrFail($id));
     }
 
     public function getBrands()
     {
-        return Brand::all();
+        return BrandResource::collection(Brand::all());
     }
 
     public function getBrand($id)
     {
-        return Brand::findOrFail($id);
+        return new BrandResource(Brand::findOrFail($id));
     }
 
     public function getProducts(Request $request)
@@ -45,7 +47,8 @@ class ClientController extends Controller
 
     public function getProduct($id)
     {
-        return Product::with(['brand', 'category'])->findOrFail($id);
+        $product = Product::with(['brand', 'category'])->findOrFail($id);
+        return new ProductResource($product);
     }
 
     public function getRelatedProducts(Request $request)
