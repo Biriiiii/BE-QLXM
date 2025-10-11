@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -11,20 +10,25 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['brand', 'category'])->latest();
+        $query = Product::query();
 
-        if ($request->filled('brand_id')) {
-            $query->where('brand_id', $request->brand_id);
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->get('category_id'));
         }
 
-        if ($request->filled('keyword')) {
-            $query->where('name', 'like', '%' . $request->keyword . '%');
+        if ($request->has('brand_id')) {
+            $query->where('brand_id', $request->get('brand_id'));
         }
 
+<<<<<<< HEAD
         $products = $query->paginate(5);
 
         return ProductResource::collection($products);
@@ -36,23 +40,46 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 's3');
+=======
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->get('min_price'));
+>>>>>>> 40c6a89abd3db13e6e79c6be8c85828395c54c8c
         }
 
-        $product = Product::create($data);
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->get('max_price'));
+        }
 
-        return new ProductResource($product->load(['brand', 'category']));
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 12);
+        $products = $query->with(['category', 'brand'])->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $products
+        ]);
     }
 
     public function show($id)
     {
-        $product = Product::with(['brand', 'category'])->find($id);
+        $product = Product::with(['category', 'brand'])->find($id);
 
         if (!$product) {
-            return response()->json(['message' => 'Không tìm thấy sản phẩm'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
         }
 
-        return new ProductResource($product);
+        return response()->json([
+            'success' => true,
+            'data' => $product
+        ]);
     }
+<<<<<<< HEAD
 
     public function update(Request $request, $id)
     {
@@ -86,3 +113,6 @@ class ProductController extends Controller
         return response()->json(['message' => 'Xóa sản phẩm thành công']);
     }
 }
+=======
+}
+>>>>>>> 40c6a89abd3db13e6e79c6be8c85828395c54c8c
