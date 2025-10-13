@@ -19,7 +19,7 @@ Route::get('test', fn() => 'API test works!');
 Route::get('ping', fn() => response()->json(['pong' => true]));
 // User Login
 Route::post('auth/login', [AuthController::class, 'login']);
-Route::get('categories/test-auth', [CategoryController::class, 'index']);
+
 // ------------------- CLIENT (public, không cần auth) -------------------
 Route::prefix('client')->group(function () {
     // Products
