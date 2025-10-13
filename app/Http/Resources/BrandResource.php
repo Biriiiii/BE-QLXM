@@ -7,15 +7,24 @@ use Illuminate\Support\Facades\Storage;
 
 class BrandResource extends JsonResource
 {
+    /**
+     * Chuyển đổi tài nguyên thành mảng.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
     public function toArray($request)
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
             'country' => $this->country,
+            // Logo là đường dẫn lưu trữ nội bộ (internal path)
             'logo' => $this->logo,
-            // Trả về link public S3 nếu có logo
-            'logo_url' => $this->logo ? Storage::disk('s3')->url($this->logo) : null,
+            // logo_url là đường dẫn công khai (public URL) từ S3
+            'logo_url' => $this->logo
+                ? Storage::disk('s3')->url($this->logo)
+                : null,
             'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

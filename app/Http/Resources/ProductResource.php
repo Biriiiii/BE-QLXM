@@ -7,6 +7,12 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductResource extends JsonResource
 {
+    /**
+     * Chuyển đổi tài nguyên sản phẩm thành mảng.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
     public function toArray($request)
     {
         return [
@@ -16,15 +22,28 @@ class ProductResource extends JsonResource
             'category_id' => $this->category_id,
             'price' => $this->price,
             'status' => $this->status,
+            // Đường dẫn lưu trữ nội bộ (internal path)
             'image' => $this->image,
             'stock' => $this->stock,
             'description' => $this->description,
             // Trả về link public S3 nếu có ảnh
-            'image_url' => $this->image ? Storage::disk('s3')->url($this->image) : null,
+            'image_url' => $this->image
+                ? Storage::disk('s3')->url($this->image)
+                : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'brand' => $this->brand,
-            'category' => $this->category,
+
+            // Eager Loaded Relationships
+            'brand' => $this->whenLoaded('brand', function () {
+                // Sử dụng BrandResource nếu bạn muốn format nhất quán
+                // return new BrandResource($this->brand); 
+                return $this->brand;
+            }),
+            'category' => $this->whenLoaded('category', function () {
+                // Sử dụng CategoryResource nếu bạn muốn format nhất quán
+                // return new CategoryResource($this->category); 
+                return $this->category;
+            }),
         ];
     }
 }
