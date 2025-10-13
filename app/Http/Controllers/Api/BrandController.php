@@ -79,9 +79,11 @@ class BrandController extends Controller
         }
         $data = $request->validated();
         if ($request->hasFile('logo')) {
+            // Bước 1: Xóa logo cũ
             if ($brand->logo) {
                 Storage::disk('s3')->delete($brand->logo);
             }
+            // Bước 2: Tải logo mới lên
             $path = $request->file('logo')->store('brands', 's3');
             if (!$path) {
                 Log::error("S3 Upload Failed: Brand logo update could not be stored.");
@@ -92,6 +94,8 @@ class BrandController extends Controller
             }
             $data['logo'] = $path;
         }
+
+        // Bước 3: Cập nhật thông tin Brand trong DB
         $brand->update($data);
         return new BrandResource($brand);
     }
