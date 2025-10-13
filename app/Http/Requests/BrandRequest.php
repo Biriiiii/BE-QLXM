@@ -24,19 +24,16 @@ class BrandRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Mặc định là quy tắc cho POST (store)
         $rules = [
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
             'country' => 'nullable|string|max:100',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // 2MB
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Quy tắc chuẩn cho file ảnh
         ];
 
-        // Kiểm tra nếu request là PUT/PATCH (update)
+        // Điều chỉnh quy tắc cho phương thức PUT/PATCH (được gửi qua _method=PUT)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            // Khi CẬP NHẬT, 'name' và 'logo' không còn bắt buộc (required) nữa 
-            // vì người dùng có thể chỉ cập nhật description hoặc country.
-            // Nếu gửi 'logo' thì vẫn phải là 'image'.
+            // Khi CẬP NHẬT: name không bắt buộc, nhưng nếu có logo thì phải là ảnh
             $rules['name'] = 'nullable|string|max:100';
             $rules['logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
         }
