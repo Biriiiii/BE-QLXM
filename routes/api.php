@@ -56,7 +56,7 @@ Route::apiResource('users', UserController::class)
     ->middleware(['auth:sanctum', 'role:admin,staff']);
 Route::patch('users/{id}/password', [UserController::class, 'changePassword'])
     ->whereNumber('id')
-    ->middleware(['auth:sanctum', 'role:admin,staff']);Ư
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
 
 // Orders (Tất cả hành động CRUD)
 Route::get('orders', [OrderController::class, 'index'])->middleware(['auth:sanctum', 'role:admin,staff']);
