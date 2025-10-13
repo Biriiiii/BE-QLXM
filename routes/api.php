@@ -50,32 +50,34 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // ------------------- ADMIN & STAFF (cần auth + role:admin,staff) -------------------
-Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
+// Users (Tất cả hành động CRUD)
+Route::apiResource('users', UserController::class)
+    ->parameters(['users' => 'id'])
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
+Route::patch('users/{id}/password', [UserController::class, 'changePassword'])
+    ->whereNumber('id')
+    ->middleware(['auth:sanctum', 'role:admin,staff']);Ư
 
-    // Users (Tất cả hành động CRUD)
-    Route::apiResource('users', UserController::class)
-        ->parameters(['users' => 'id']);
-    Route::patch('users/{id}/password', [UserController::class, 'changePassword'])
-        ->whereNumber('id');
+// Orders (Tất cả hành động CRUD)
+Route::get('orders', [OrderController::class, 'index'])->middleware(['auth:sanctum', 'role:admin,staff']);
+Route::post('orders', [OrderController::class, 'store'])->middleware(['auth:sanctum', 'role:admin,staff']);
+Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id')->middleware(['auth:sanctum', 'role:admin,staff']);
+Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->whereNumber('id')->middleware(['auth:sanctum', 'role:admin,staff']);
+Route::delete('orders/{id}', [OrderController::class, 'destroy'])->whereNumber('id')->middleware(['auth:sanctum', 'role:admin,staff']);
 
-    // Orders (Tất cả hành động CRUD)
-    // Sử dụng route tùy chỉnh cho các hành động không phải CRUD tiêu chuẩn
-    Route::get('orders', [OrderController::class, 'index']);
-    Route::post('orders', [OrderController::class, 'store']);
-    Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
-    Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->whereNumber('id');
-    Route::delete('orders/{id}', [OrderController::class, 'destroy'])->whereNumber('id');
-
-    // CRUD Resources (Categories, Brands, Products, Customers)
-    Route::apiResource('categories', CategoryController::class)
-        ->parameters(['categories' => 'id']);
-
-    Route::apiResource('brands', BrandController::class)
-        ->parameters(['brands' => 'id']);
-
-    Route::apiResource('products', ProductController::class)
-        ->parameters(['products' => 'id']);
-
-    Route::apiResource('customers', CustomerController::class)
-        ->parameters(['customers' => 'id']);
-});
+// Categories (Tất cả hành động CRUD)
+Route::apiResource('categories', CategoryController::class)
+    ->parameters(['categories' => 'id'])
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
+// Brands (Tất cả hành động CRUD)
+Route::apiResource('brands', BrandController::class)
+    ->parameters(['brands' => 'id'])
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
+// Products (Tất cả hành động CRUD)
+Route::apiResource('products', ProductController::class)
+    ->parameters(['products' => 'id'])
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
+// Customers (Tất cả hành động CRUD)
+Route::apiResource('customers', CustomerController::class)
+    ->parameters(['customers' => 'id'])
+    ->middleware(['auth:sanctum', 'role:admin,staff']);
