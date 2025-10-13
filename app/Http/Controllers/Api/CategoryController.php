@@ -11,10 +11,9 @@ use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     // Lấy danh sách category
-    public function index(CategoryRequest $request)
+    public function index()
     {
-        $categories = Category::withCount('products')->orderBy('name')->get();
-        return CategoryResource::collection($categories);
+        return response('test index');
     }
 
     // Xem chi tiết category
