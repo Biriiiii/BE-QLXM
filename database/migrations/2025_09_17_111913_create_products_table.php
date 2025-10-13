@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->enum('status', ['available', 'unavailable'])->default('available'); // 👈 sửa lại
             $table->foreignId('brand_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+            $table->timestamps();   
         });
     }
 
