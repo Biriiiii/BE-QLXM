@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use Illuminate\Http\Request;
 // Nếu bạn sử dụng Request Form Validation, hãy import BrandRequest:
-// use App\Http\Requests\BrandRequest; 
+use App\Http\Requests\BrandRequest;
 // Nếu bạn sử dụng API Resources, hãy import BrandResource:
-// use App\Http\Resources\BrandResource; 
+use App\Http\Resources\BrandResource;
+
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 
 class BrandController extends Controller
@@ -19,15 +21,8 @@ class BrandController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Brand::query();
-
-        // Thực hiện truy vấn và sắp xếp (giữ lại từ nhánh hợp nhất)
-        $brands = $query->orderBy('name')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $brands
-        ]);
+        $brands = Brand::orderBy('name')->get();
+        return BrandResource::collection($brands);
     }
 
     /**
@@ -35,24 +30,22 @@ class BrandController extends Controller
      * Logic này được trích xuất từ xung đột HEAD.
      */
     // Sử dụng BrandRequest $request nếu đã định nghĩa Request Validation
-    public function store(Request $request)
+    public function store(BrandRequest $request)
     {
-        // $data = $request->validated(); // Dùng nếu BrandRequest được sử dụng
-        $data = $request->all(); // Dùng tạm nếu chỉ sử dụng Request
-
+        $data = $request->validated();
         if ($request->hasFile('logo')) {
-            // Lưu logo vào S3 (dựa trên logic trong xung đột)
-            $data['logo'] = $request->file('logo')->store('brands', 's3');
+            $path = $request->file('logo')->store('brands', 's3');
+            if (!$path) {
+                Log::error("S3 Upload Failed: Brand logo could not be stored.");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'LỖI S3: Không thể tải ảnh lên. Vui lòng kiểm tra lại cấu hình AWS và quyền truy cập bucket.',
+                ], 500);
+            }
+            $data['logo'] = $path;
         }
-
         $brand = Brand::create($data);
-
-        // return new BrandResource($brand); // Dùng nếu BrandResource được sử dụng
-        return response()->json([
-            'success' => true,
-            'data' => $brand,
-            'message' => 'Brand created successfully'
-        ], 201);
+        return new BrandResource($brand);
     }
 
     /**
@@ -61,18 +54,13 @@ class BrandController extends Controller
     public function show($id)
     {
         $brand = Brand::find($id);
-
         if (!$brand) {
             return response()->json([
                 'success' => false,
                 'message' => 'Brand not found'
             ], 404);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $brand
-        ]);
+        return new BrandResource($brand);
     }
 
     /**
@@ -80,37 +68,32 @@ class BrandController extends Controller
      * Logic này được trích xuất từ xung đột HEAD trong phương thức show.
      */
     // Sử dụng BrandRequest $request nếu đã định nghĩa Request Validation
-    public function update(Request $request, $id)
+    public function update(BrandRequest $request, $id)
     {
         $brand = Brand::find($id);
-
         if (!$brand) {
             return response()->json([
                 'success' => false,
                 'message' => 'Brand not found'
             ], 404);
         }
-
-        // $data = $request->validated(); // Dùng nếu BrandRequest được sử dụng
-        $data = $request->all(); // Dùng tạm nếu chỉ sử dụng Request
-
+        $data = $request->validated();
         if ($request->hasFile('logo')) {
-            // Xóa logo cũ (nếu có)
             if ($brand->logo) {
                 Storage::disk('s3')->delete($brand->logo);
             }
-            // Lưu logo mới
-            $data['logo'] = $request->file('logo')->store('brands', 's3');
+            $path = $request->file('logo')->store('brands', 's3');
+            if (!$path) {
+                Log::error("S3 Upload Failed: Brand logo update could not be stored.");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'LỖI S3: Không thể tải ảnh mới lên. Vui lòng kiểm tra lại cấu hình AWS và quyền truy cập bucket.',
+                ], 500);
+            }
+            $data['logo'] = $path;
         }
-
         $brand->update($data);
-
-        // return new BrandResource($brand); // Dùng nếu BrandResource được sử dụng
-        return response()->json([
-            'success' => true,
-            'data' => $brand,
-            'message' => 'Brand updated successfully'
-        ]);
+        return new BrandResource($brand);
     }
 
     /**
