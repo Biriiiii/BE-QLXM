@@ -54,6 +54,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Brands
     Route::apiResource('brands', BrandController::class)
         ->parameters(['brands' => 'id']);
+    Route::put('/{id}', [BrandController::class, 'update']);
+    Route::patch('/{id}', [BrandController::class, 'update']);
     // Products
     Route::apiResource('products', ProductController::class)
         ->parameters(['products' => 'id']);
