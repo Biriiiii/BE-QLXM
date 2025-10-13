@@ -13,7 +13,7 @@ class CategoryController extends Controller
     // Lấy danh sách category
     public function index()
     {
-        return response('test index');
+        return response()->json(Category::all());
     }
 
     // Xem chi tiết category
