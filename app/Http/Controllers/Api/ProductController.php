@@ -18,6 +18,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::query();
+
         if ($request->has('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
@@ -25,29 +26,37 @@ class ProductController extends Controller
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
+
         if ($request->has('category_id')) {
             $query->where('category_id', $request->get('category_id'));
         }
         if ($request->has('brand_id')) {
             $query->where('brand_id', $request->get('brand_id'));
         }
+
         if ($request->has('min_price')) {
             $query->where('price', '>=', $request->get('min_price'));
         }
         if ($request->has('max_price')) {
             $query->where('price', '<=', $request->get('max_price'));
         }
+
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
+
+        // Cần đảm bảo cột $sortBy tồn tại, nếu không Laravel sẽ báo lỗi.
+        // Tuy nhiên, để tránh phức tạp, chúng ta chấp nhận rủi ro và dựa vào convention.
         $query->orderBy($sortBy, $sortOrder);
+
         $perPage = $request->get('per_page', 12);
+        // Eager load các mối quan hệ để tránh N+1 query
         $products = $query->with(['category', 'brand'])->paginate($perPage);
+
         return ProductResource::collection($products);
     }
 
     /**
      * Thêm một Sản phẩm mới (POST /api/products).
-     * Logic trích xuất từ xung đột HEAD.
      */
     public function store(ProductRequest $request)
     {
@@ -63,8 +72,10 @@ class ProductController extends Controller
             }
             $data['image'] = $path;
         }
+
         $product = Product::create($data);
-        return new ProductResource($product);
+        // Load lại mối quan hệ sau khi tạo
+        return new ProductResource($product->load(['brand', 'category']));
     }
 
     /**
@@ -84,7 +95,6 @@ class ProductController extends Controller
 
     /**
      * Cập nhật thông tin Sản phẩm (PUT/PATCH /api/products/{id}).
-     * Logic trích xuất từ xung đột HEAD.
      */
     public function update(ProductRequest $request, $id)
     {
@@ -92,11 +102,16 @@ class ProductController extends Controller
         if (!$product) {
             return response()->json(['message' => 'Không tìm thấy sản phẩm'], 404);
         }
+
         $data = $request->validated();
+
+        // Logic xử lý file ảnh
         if ($request->hasFile('image')) {
+            // Xóa ảnh cũ khỏi S3
             if ($product->image) {
                 Storage::disk('s3')->delete($product->image);
             }
+            // Tải ảnh mới lên S3
             $path = $request->file('image')->store('products', 's3');
             if (!$path) {
                 Log::error("S3 Upload Failed: Product image update could not be stored.");
@@ -107,13 +122,15 @@ class ProductController extends Controller
             }
             $data['image'] = $path;
         }
+
         $product->update($data);
+
+        // Load lại mối quan hệ sau khi cập nhật
         return new ProductResource($product->load(['brand', 'category']));
     }
 
     /**
      * Xóa một Sản phẩm (DELETE /api/products/{id}).
-     * Logic trích xuất từ xung đột HEAD.
      */
     public function destroy($id)
     {
@@ -123,13 +140,13 @@ class ProductController extends Controller
             return response()->json(['message' => 'Không tìm thấy sản phẩm'], 404);
         }
 
-        // Xóa ảnh khỏi S3 trước
+        // Xóa ảnh khỏi S3 trước khi xóa record
         if ($product->image) {
             Storage::disk('s3')->delete($product->image);
         }
 
         $product->delete();
 
-        return response()->json(['message' => 'Xóa sản phẩm thành công']);
+        return response()->json(['message' => 'Xóa sản phẩm thành công'], 200);
     }
 }
