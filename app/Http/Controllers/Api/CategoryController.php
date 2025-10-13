@@ -3,41 +3,70 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request)
+    // Lấy danh sách category
+    public function index(CategoryRequest $request)
     {
-        $query = Category::query();
-
-        if ($request->get('parent_only', false)) {
-            $query->whereNull('parent_id');
-        }
-
-        $categories = $query->orderBy('sort_order')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $categories
-        ]);
+        $categories = Category::withCount('products')->orderBy('name')->get();
+        return CategoryResource::collection($categories);
     }
 
+    // Xem chi tiết category
     public function show($id)
     {
-        $category = Category::find($id);
-
+        $category = Category::withCount('products')->find($id);
         if (!$category) {
             return response()->json([
                 'success' => false,
                 'message' => 'Category not found'
             ], 404);
         }
+        return new CategoryResource($category);
+    }
 
+    // Tạo mới category
+    public function store(CategoryRequest $request)
+    {
+        $data = $request->validated();
+        $category = Category::create($data);
+        return new CategoryResource($category);
+    }
+
+    // Sửa category
+    public function update(CategoryRequest $request, $id)
+    {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+        $data = $request->validated();
+        $category->update($data);
+        return new CategoryResource($category);
+    }
+
+    // Xóa category
+    public function destroy($id)
+    {
+        $category = Category::find($id);
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+        $category->delete();
         return response()->json([
             'success' => true,
-            'data' => $category
-        ]);
+            'message' => 'Category deleted successfully'
+        ], 200);
     }
 }
