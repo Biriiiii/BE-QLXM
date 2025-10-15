@@ -29,7 +29,11 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => 'nullable|exists:customers,id',
+            'customer_name' => 'required_without:customer_id|string|max:100',
+            'customer_phone' => 'required_without:customer_id|string|max:20',
+            'customer_email' => 'nullable|email|max:100',
+            'customer_address' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -37,8 +41,21 @@ class OrderController extends Controller
             'installment_amount' => 'nullable|numeric|min:0',
         ]);
 
+        // Nếu không có customer_id, tạo mới customer
+        if (empty($data['customer_id'])) {
+            $customer = \App\Models\Customer::create([
+                'name' => $data['customer_name'],
+                'phone' => $data['customer_phone'],
+                'email' => $data['customer_email'] ?? null,
+                'address' => $data['customer_address'] ?? null,
+            ]);
+            $customerId = $customer->id;
+        } else {
+            $customerId = $data['customer_id'];
+        }
+
         $order = Order::create([
-            'customer_id' => $data['customer_id'],
+            'customer_id' => $customerId,
             'order_date' => now(),
             'status' => 'pending_deposit',
             'total_amount' => 0,
@@ -71,7 +88,8 @@ class OrderController extends Controller
             'deposit_amount' => $deposit,
         ]);
 
-        return response()->json(['data' => $order], 201);
+        $order->load(['items.product', 'customer']);
+        return new OrderResource($order);
     }
 
     public function show($id)

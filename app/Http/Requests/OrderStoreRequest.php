@@ -14,7 +14,12 @@ class OrderStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => 'required|exists:customers,id',
+            // Cho phép truyền customer_id hoặc thông tin khách hàng mới
+            'customer_id' => 'nullable|exists:customers,id',
+            'customer_name' => 'required_without:customer_id|string|max:100',
+            'customer_phone' => 'required_without:customer_id|string|max:20',
+            'customer_email' => 'nullable|email|max:100',
+            'customer_address' => 'nullable|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
