@@ -92,6 +92,7 @@ class ClientController extends Controller
             $order = Order::create([
                 'customer_id' => $customer->id,
                 'status' => 'pending',
+                'order_date' => now(),
                 'total' => 0,
             ]);
 
