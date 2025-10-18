@@ -7,11 +7,15 @@ use Illuminate\Validation\Rule;
 
 class OrderStatusRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    public function rules(): array {
+    public function rules(): array
+    {
         return [
-            'status' => ['required', Rule::in(['pending','paid','shipped','completed','cancelled'])]
+            'status' => ['required', Rule::in(['pending', 'paid', 'shipped', 'completed', 'cancelled'])]
         ];
     }
 }

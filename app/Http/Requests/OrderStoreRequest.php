@@ -17,9 +17,13 @@ class OrderStoreRequest extends FormRequest
             // Cho phép truyền customer_id hoặc thông tin khách hàng mới
             'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'required_without:customer_id|string|max:100',
-            'customer_phone' => 'required_without:customer_id|string|max:20',
+            'customer_phone' => [
+                'required_without:customer_id',
+                'regex:/^0[0-9]{9}$/', // Đúng định dạng số điện thoại Việt Nam 10 số
+                'max:10'
+            ],
             'customer_email' => 'nullable|email|max:100',
-            'customer_address' => 'nullable|string|max:255',
+            'customer_address' => 'nullable|string|max:200',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',

@@ -50,16 +50,23 @@ class OrderController extends Controller
             $data = $request->validated();
             $customerId = null;
 
-            // Xử lý tạo mới customer nếu customer_id không được cung cấp
-            if (empty($data['customer_id'])) {
-                $customer = Customer::create([
-                    'name' => $data['customer_name'],
-                    'phone' => $data['customer_phone'],
-                    'email' => $data['customer_email'] ?? null,
-                ]);
+            // Tìm hoặc cập nhật customer theo số điện thoại
+            if (!empty($data['customer_phone'])) {
+                $customer = Customer::updateOrCreate(
+                    ['phone' => $data['customer_phone']],
+                    [
+                        'name' => $data['customer_name'],
+                        'email' => $data['customer_email'] ?? null,
+                        'address' => $data['customer_address'] ?? null,
+                    ]
+                );
                 $customerId = $customer->id;
-            } else {
+            } else if (!empty($data['customer_id'])) {
                 $customerId = $data['customer_id'];
+            } else {
+                return response()->json([
+                    'message' => 'Vui lòng nhập số điện thoại khách hàng.'
+                ], 422);
             }
 
             // Tạo đơn hàng chính

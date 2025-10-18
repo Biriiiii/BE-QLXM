@@ -59,7 +59,7 @@ Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
         ->whereNumber('id');
 
     // Orders (Tất cả hành động CRUD)
-    // Sử dụng route tùy chỉnh cho các hành động không phải CRUD tiêu chuẩn
+    // Sử dụng route tùy chỉnh cho các hành động không phải CRUD tiêu chuẩn 
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
     Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
