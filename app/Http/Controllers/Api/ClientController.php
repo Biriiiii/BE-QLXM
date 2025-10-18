@@ -93,7 +93,7 @@ class ClientController extends Controller
                 'customer_id' => $customer->id,
                 'status' => 'pending',
                 'order_date' => now(),
-                'total' => 0,
+                'total_amount' => 0,
             ]);
 
             $total = 0;
@@ -112,7 +112,7 @@ class ClientController extends Controller
                 ]);
                 $total += $product->price * $item['quantity'];
             }
-            $order->total = $total;
+            $order->total_amount = $total;
             $order->save();
 
             DB::commit();
