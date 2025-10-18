@@ -10,7 +10,10 @@ use App\Models\Product;
 use \App\Http\Resources\CategoryResource;
 use \App\Http\Resources\BrandResource;
 use App\Models\Order;
-use Illuminate\Http\Request;
+use App\Models\Customer;
+use App\Http\Requests\OrderStoreRequest;
+use Illuminate\Support\Facades\DB;
+use App\Http\Request;
 
 class ClientController extends Controller
 {
@@ -68,5 +71,61 @@ class ClientController extends Controller
         $limit = $request->input('limit', 4);
         $products = $query->take($limit)->get();
         return ProductResource::collection($products);
+    }
+    public function createOrder(OrderStoreRequest $request)
+    {
+        $validated = $request->validated();
+
+        DB::beginTransaction();
+        try {
+            // Tìm hoặc tạo customer
+            $customer = Customer::updateOrCreate(
+                ['phone' => $validated['customer_phone']],
+                [
+                    'name' => $validated['customer_name'],
+                    'email' => $validated['customer_email'] ?? null,
+                    'address' => $validated['customer_address'],
+                ]
+            );
+
+            // Tạo order
+            $order = Order::create([
+                'customer_id' => $customer->id,
+                'status' => 'pending',
+                'total' => 0,
+            ]);
+
+            $total = 0;
+            foreach ($validated['items'] as $item) {
+                $product = Product::findOrFail($item['product_id']);
+                if ($product->stock < $item['quantity']) {
+                    throw new \Exception('Sản phẩm ' . $product->name . ' không đủ hàng');
+                }
+                $product->stock -= $item['quantity'];
+                $product->save();
+
+                $order->items()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                ]);
+                $total += $product->price * $item['quantity'];
+            }
+            $order->total = $total;
+            $order->save();
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id,
+                'message' => 'Đặt hàng thành công!'
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 }
