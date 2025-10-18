@@ -13,7 +13,7 @@ use App\Models\Order;
 use App\Models\Customer;
 use App\Http\Requests\OrderStoreRequest;
 use Illuminate\Support\Facades\DB;
-use App\Http\Request;
+use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
