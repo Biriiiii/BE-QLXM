@@ -27,10 +27,12 @@ class CategoryRequest extends FormRequest
                 'name' => [
                     'required',
                     'string',
-                    'max:100',
+                    'min:2',
+                    'max:50',
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
                     Rule::unique('categories', 'name') // Tên danh mục không được trùng
                 ],
-                'description' => 'nullable|string'
+                'description' => 'nullable|string|max:255'
             ];
         }
 
@@ -44,11 +46,13 @@ class CategoryRequest extends FormRequest
                     'sometimes', // Chỉ validate nếu trường 'name' được gửi lên
                     'required',
                     'string',
-                    'max:30',
+                    'min:2',
+                    'max:50',
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
                     // Khi update, kiểm tra unique nhưng bỏ qua chính nó
                     Rule::unique('categories', 'name')->ignore($categoryId)
                 ],
-                'description' => 'sometimes|nullable|string'
+                'description' => 'sometimes|nullable|string|max:255'
             ];
         }
 
@@ -63,7 +67,10 @@ class CategoryRequest extends FormRequest
         return [
             'name.required' => 'Tên danh mục là bắt buộc.',
             'name.unique' => 'Tên danh mục này đã tồn tại.',
-            'name.max' => 'Tên danh mục quá dài (tối đa 30 ký tự).',
+            'name.min' => 'Tên danh mục quá ngắn (tối thiểu 2 ký tự).',
+            'name.max' => 'Tên danh mục quá dài (tối đa 50 ký tự).',
+            'name.regex' => 'Tên danh mục chỉ được chứa chữ cái, số, khoảng trắng và dấu gạch.',
+            'description.max' => 'Mô tả quá dài (tối đa 255 ký tự).',
         ];
     }
 }
