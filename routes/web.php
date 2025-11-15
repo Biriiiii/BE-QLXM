@@ -38,3 +38,19 @@ Route::get('/storage/{filename}', function ($filename) {
 
     return response()->file($path);
 })->where('filename', '.*');
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Message;
+
+Route::get('/test-email', function () {
+    try {
+        Mail::raw('Đây là nội dung email test từ route.', function (Message $message) {
+            $message->to('email-cua-ban@gmail.com') // Thay bằng email thật
+                    ->subject('Test Mail từ Laravel BE');
+        });
+        
+        return response()->json(['message' => 'Đã gửi email thành công!']);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
