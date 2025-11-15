@@ -3,41 +3,79 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class BrandRequest extends FormRequest
 {
     /**
      * Xác định xem người dùng có được ủy quyền để thực hiện yêu cầu này không.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
-        // Trả về true vì quyền truy cập được xử lý bởi middleware 'role:admin,staff'
-        return true;
+        return true; // Giả sử middleware đã xác thực
     }
 
     /**
      * Lấy các quy tắc xác thực áp dụng cho yêu cầu.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        $rules = [
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'country' => 'nullable|string|max:100',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Quy tắc chuẩn cho file ảnh
-        ];
-
-        // Điều chỉnh quy tắc cho phương thức PUT/PATCH (được gửi qua _method=PUT)
-        if ($this->isMethod('put') || $this->isMethod('patch')) {
-            // Khi CẬP NHẬT: name không bắt buộc, nhưng nếu có logo thì phải là ảnh
-            $rules['name'] = 'nullable|string|max:100';
-            $rules['logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048';
+        // Quy tắc mặc định cho POST (tạo mới)
+        if ($this->isMethod('post')) {
+            return [
+                'name' => [
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:50',
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
+                    Rule::unique('brands', 'name') // Tên thương hiệu không được trùng
+                ],
+                'description' => 'nullable|string|max:255',
+                'country' => 'nullable|string|max:100',
+                'logo' => 'nullable|string|max:500', // URL logo
+            ];
         }
 
-        return $rules;
+        // Quy tắc cho PUT/PATCH (cập nhật)
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            // Lấy ID brand từ route (ví dụ: /api/brands/123)
+            $brandId = $this->route('brand'); // Tên tham số trên route
+
+            return [
+                'name' => [
+                    'sometimes', // Chỉ validate nếu trường 'name' được gửi lên
+                    'required',
+                    'string',
+                    'min:2',
+                    'max:50',
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
+                    // Khi update, kiểm tra unique nhưng bỏ qua chính nó
+                    Rule::unique('brands', 'name')->ignore($brandId)
+                ],
+                'description' => 'sometimes|nullable|string|max:255',
+                'country' => 'sometimes|nullable|string|max:100',
+                'logo' => 'sometimes|nullable|string|max:500',
+            ];
+        }
+
+        return [];
+    }
+
+    /**
+     * Tùy chỉnh thông báo lỗi
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Tên thương hiệu là bắt buộc.',
+            'name.unique' => 'Tên thương hiệu này đã tồn tại.',
+            'name.min' => 'Tên thương hiệu quá ngắn (tối thiểu 2 ký tự).',
+            'name.max' => 'Tên thương hiệu quá dài (tối đa 50 ký tự).',
+            'name.regex' => 'Tên thương hiệu chỉ được chứa chữ cái, số, khoảng trắng và dấu gạch.',
+            'description.max' => 'Mô tả quá dài (tối đa 255 ký tự).',
+            'country.max' => 'Tên quốc gia quá dài (tối đa 100 ký tự).',
+            'logo.max' => 'URL logo quá dài (tối đa 500 ký tự).',
+        ];
     }
 }
