@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Http\Resources\OrderResource;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Product;
@@ -12,7 +13,10 @@ use \App\Http\Resources\BrandResource;
 use App\Models\Order;
 use App\Models\Customer;
 use App\Http\Requests\OrderStoreRequest;
+use App\Mail\OrderConfirmation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
@@ -97,32 +101,58 @@ class ClientController extends Controller
             ]);
 
             $total = 0;
+            $orderItems = [];
+
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                if ($product->stock < $item['quantity']) {
-                    throw new \Exception('Sản phẩm ' . $product->name . ' không đủ hàng');
-                }
-                $product->stock -= $item['quantity'];
-                $product->save();
 
-                $order->items()->create([
+                // Kiểm tra tồn kho
+                if ($product->stock < $item['quantity']) {
+                    throw new \Exception('Sản phẩm ' . $product->name . ' không đủ hàng (còn lại: ' . $product->stock . ')');
+                }
+
+                // Trừ tồn kho
+                $product->decrement('stock', $item['quantity']);
+
+                // Tạo order item
+                $orderItem = $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price' => $product->price,
                 ]);
+
                 $total += $product->price * $item['quantity'];
+                $orderItems[] = $orderItem;
             }
-            $order->total_amount = $total;
-            $order->save();
+
+            // Cập nhật tổng tiền
+            $order->update(['total_amount' => $total]);
+
+            // Load relationships cho email
+            $order->load(['customer', 'items.product']);
+
+            // Gửi email xác nhận (nếu có email)
+            if ($customer->email) {
+                try {
+                    Mail::to($customer->email)->send(new OrderConfirmation($order));
+                    Log::info("Email confirmation sent to: " . $customer->email . " for order: " . $order->id);
+                } catch (\Exception $mailException) {
+                    Log::error("Failed to send email: " . $mailException->getMessage());
+                    // Không throw exception để không rollback order
+                }
+            }
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
-                'order_id' => $order->id,
-                'message' => 'Đặt hàng thành công!'
+                'message' => 'Đặt hàng thành công!' . ($customer->email ? ' Email xác nhận đã được gửi.' : ''),
+                'data' => new OrderResource($order)
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("Order creation failed: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

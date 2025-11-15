@@ -22,7 +22,7 @@ class OrderStoreRequest extends FormRequest
                 'regex:/^0[0-9]{9}$/', // Đúng định dạng số điện thoại Việt Nam 10 số
                 'max:10'
             ],
-            'customer_email' => 'required|email|max:100',
+            'customer_email' => 'nullable|email|max:100',
             'customer_address' => 'required|string|max:200',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
