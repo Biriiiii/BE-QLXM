@@ -132,21 +132,41 @@ class ClientController extends Controller
             $order->load(['customer', 'items.product']);
 
             // Gửi email xác nhận (nếu có email)
+            $emailSent = false;
+            $emailError = null;
+
             if ($customer->email) {
                 try {
+                    Log::info("Attempting to send email to: " . $customer->email . " for order: " . $order->id);
                     Mail::to($customer->email)->send(new OrderConfirmation($order));
-                    Log::info("Email confirmation sent to: " . $customer->email . " for order: " . $order->id);
+                    Log::info("Email confirmation sent successfully to: " . $customer->email . " for order: " . $order->id);
+                    $emailSent = true;
                 } catch (\Exception $mailException) {
-                    Log::error("Failed to send email: " . $mailException->getMessage());
+                    $emailError = $mailException->getMessage();
+                    Log::error("Failed to send email to: " . $customer->email . " - Error: " . $emailError);
+                    Log::error("Mail Exception Stack Trace: " . $mailException->getTraceAsString());
                     // Không throw exception để không rollback order
                 }
+            } else {
+                Log::info("No email provided for order: " . $order->id);
             }
 
             DB::commit();
 
+            $message = 'Đặt hàng thành công!';
+            if ($customer->email) {
+                if ($emailSent) {
+                    $message .= ' Email xác nhận đã được gửi.';
+                } else {
+                    $message .= ' Tuy nhiên không thể gửi email xác nhận.';
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Đặt hàng thành công!' . ($customer->email ? ' Email xác nhận đã được gửi.' : ''),
+                'message' => $message,
+                'email_sent' => $emailSent,
+                'email_error' => $emailError,
                 'data' => new OrderResource($order)
             ], 201);
         } catch (\Exception $e) {
@@ -157,6 +177,50 @@ class ClientController extends Controller
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 400);
+        }
+    }
+
+    // Debug endpoint để test email
+    public function testEmail(Request $request)
+    {
+        try {
+            $email = $request->input('email', 'bangeabar@gmail.com');
+
+            // Tìm order mới nhất để test
+            $order = Order::with(['customer', 'items.product'])->latest()->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy đơn hàng nào để test'
+                ], 404);
+            }
+
+            Log::info("Testing email send to: " . $email . " with order: " . $order->id);
+
+            Mail::to($email)->send(new OrderConfirmation($order));
+
+            Log::info("Test email sent successfully to: " . $email);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email test gửi thành công!',
+                'email' => $email,
+                'order_id' => $order->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Test email failed: " . $e->getMessage());
+            Log::error("Test email stack trace: " . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Email test thất bại: ' . $e->getMessage(),
+                'error_details' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
         }
     }
 }

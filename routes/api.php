@@ -38,6 +38,7 @@ Route::prefix('client')->group(function () {
 
     // Orders & Cart
     Route::post('orders', [ClientController::class, 'createOrder']);
+    Route::post('test-email', [ClientController::class, 'testEmail']); // Debug email
     Route::post('cart/add', [ClientController::class, 'addToCart']);
     Route::get('cart', [ClientController::class, 'getCart']);
     Route::post('cart/remove', [ClientController::class, 'removeFromCart']);
