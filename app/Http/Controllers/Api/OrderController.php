@@ -8,19 +8,22 @@ use App\Http\Requests\OrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Customer; // Imported Customer model for cleaner use
+use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+// --- BẮT ĐẦU THÊM VÀO ---
+use Illuminate\Support\Facades\Mail; // <-- Thêm Mail Facade
+use App\Mail\OrderPlaced; // <-- Thêm Mailable (sẽ tạo ở file 2)
+// --- KẾT THÚC THÊM VÀO ---
+
+
 class OrderController extends Controller
 {
     /**
-     * Lấy danh sách đơn hàng với các bộ lọc tùy chọn.
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * Lấy danh sách đơn hàng...
      */
     public function index(Request $request)
     {
@@ -35,41 +38,38 @@ class OrderController extends Controller
     }
 
     /**
-     * Tạo mới đơn hàng và trừ tồn kho sản phẩm.
-     * Sử dụng DB::transaction để đảm bảo tính toàn vẹn dữ liệu.
-     *
-     * @param OrderStoreRequest $request
-     * @return OrderResource|\Illuminate\Http\JsonResponse
+     * Tạo mới đơn hàng...
      */
     public function store(OrderStoreRequest $request)
     {
-        // Bắt đầu transaction để đảm bảo tất cả các thao tác DB được thực hiện hoặc không có thao tác nào
         DB::beginTransaction();
 
         try {
             $data = $request->validated();
             $customerId = null;
+            $customerEmail = null; // <-- Biến tạm để giữ email
 
-            // Tìm hoặc cập nhật customer theo số điện thoại
             if (!empty($data['customer_phone'])) {
                 $customer = Customer::updateOrCreate(
                     ['phone' => $data['customer_phone']],
                     [
                         'name' => $data['customer_name'],
-                        'email' => $data['customer_email'] ?? null,
+                        'email' => $data['customer_email'] ?? null, // <-- Lấy email
                         'address' => $data['customer_address'] ?? null,
                     ]
                 );
                 $customerId = $customer->id;
+                $customerEmail = $customer->email; // <-- Lưu email lại
             } else if (!empty($data['customer_id'])) {
                 $customerId = $data['customer_id'];
+                $customer = Customer::find($customerId);
+                if ($customer) $customerEmail = $customer->email; // <-- Lấy email từ customer cũ
             } else {
                 return response()->json([
                     'message' => 'Vui lòng nhập số điện thoại khách hàng.'
                 ], 422);
             }
 
-            // Tạo đơn hàng chính
             $order = Order::create([
                 'customer_id' => $customerId,
                 'status' => 'pending_deposit',
@@ -77,28 +77,24 @@ class OrderController extends Controller
                 'deposit_amount' => 0,
                 'installment_term' => $data['installment_term'] ?? null,
                 'installment_amount' => $data['installment_amount'] ?? null,
-                'order_date' => Carbon::now(), // Thêm ngày đặt hàng
+                'order_date' => Carbon::now(),
             ]);
 
             $total = 0;
-            // Xử lý các mặt hàng, trừ tồn kho và tính tổng
             foreach ($data['items'] as $item) {
-                // Sử dụng findOrFail để báo lỗi 404 nếu sản phẩm không tồn tại
                 $product = Product::findOrFail($item['product_id']);
 
                 if ($product->stock < $item['quantity']) {
-                    DB::rollBack(); // Hoàn tác nếu không đủ tồn kho
+                    DB::rollBack();
                     return response()->json([
                         'message' => 'Sản phẩm ' . $product->name . ' (ID: ' . $product->id . ') không đủ tồn kho. Tồn kho hiện tại: ' . $product->stock
                     ], 422);
                 }
 
-                // Giảm tồn kho và tính tổng
                 $product->decrement('stock', $item['quantity']);
                 $lineTotal = $product->price * $item['quantity'];
                 $total += $lineTotal;
 
-                // Tạo chi tiết đơn hàng (Order Item)
                 $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
@@ -106,7 +102,6 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Cập nhật tổng số tiền và tiền đặt cọc (30% tổng giá trị)
             $deposit = round($total * 0.3, 2);
             $order->update([
                 'total_amount' => $total,
@@ -116,11 +111,30 @@ class OrderController extends Controller
             // Commit transaction nếu mọi thứ thành công
             DB::commit();
 
+            // Tải lại thông tin để gửi mail và trả về response
             $order->load(['items.product', 'customer']);
+
+
+            // --- BẮT ĐẦU THÊM CODE GỬI MAIL ---
+            try {
+                // $customerEmail đã được lấy ở trên
+                if (!empty($customerEmail)) {
+                    Mail::to($customerEmail)
+                        ->send(new OrderPlaced($order)); // Dùng Mailable
+                } else {
+                    Log::info('Order ' . $order->id . ' created but no customer email to send to.');
+                }
+            } catch (\Exception $e) {
+                // Quan trọng: Ghi log lỗi mail, nhưng KHÔNG rollBack
+                // vì đơn hàng đã thành công.
+                Log::error('Gửi email đơn hàng ' . $order->id . ' thất bại: ' . $e->getMessage());
+            }
+            // --- KẾT THÚC CODE GỬI MAIL ---
+
+
             return new OrderResource($order);
         } catch (\Throwable $e) {
-            DB::rollBack(); // Hoàn tác nếu có bất kỳ lỗi nào xảy ra
-
+            DB::rollBack();
             Log::error('OrderController@store error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all(),
@@ -143,9 +157,6 @@ class OrderController extends Controller
 
     /**
      * Hiển thị chi tiết đơn hàng.
-     *
-     * @param int $id
-     * @return OrderResource
      */
     public function show($id)
     {
@@ -155,10 +166,6 @@ class OrderController extends Controller
 
     /**
      * Cập nhật trạng thái đơn hàng.
-     *
-     * @param OrderStatusRequest $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(OrderStatusRequest $request, $id)
     {
@@ -168,11 +175,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Xóa đơn hàng và phục hồi tồn kho (nếu đơn hàng chưa bị hủy).
-     * Sử dụng DB::transaction để đảm bảo tính toàn vẹn.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
+     * Xóa đơn hàng...
      */
     public function destroy($id)
     {
@@ -180,9 +183,6 @@ class OrderController extends Controller
 
         try {
             $order = Order::with('items.product')->findOrFail($id);
-
-            // Chỉ phục hồi tồn kho nếu trạng thái đơn hàng KHÔNG PHẢI là 'cancelled'
-            // (giả định rằng stock đã được phục hồi khi chuyển sang 'cancelled' hoặc stock vẫn đang bị trừ)
             if ($order->status !== 'cancelled') {
                 foreach ($order->items as $item) {
                     if ($item->product) {
@@ -190,19 +190,14 @@ class OrderController extends Controller
                     }
                 }
             }
-
             $order->delete();
-
             DB::commit();
-
             return response()->json(['message' => 'Đã xóa đơn hàng thành công và phục hồi tồn kho.']);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('OrderController@destroy error: ' . $e->getMessage(), ['id' => $id]);
-
             $statusCode = $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ? 404 : 500;
             $message = $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException ? 'Không tìm thấy đơn hàng cần xóa.' : 'Đã xảy ra lỗi khi xóa đơn hàng.';
-
             return response()->json([
                 'message' => $message,
                 'error' => $e->getMessage(),
