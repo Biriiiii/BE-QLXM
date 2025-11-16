@@ -29,7 +29,7 @@ class ProductRequest extends FormRequest
                 'quantity' => 'required|integer|min:0',
                 'category_id' => 'required|integer',
                 'brand_id' => 'required|integer',
-                'image' => 'nullable|file|image|max:2048', // File upload
+                'image' => 'nullable|string|max:500', // URL string hoặc bỏ trống
                 'is_active' => 'nullable|boolean',
             ];
         }
@@ -43,7 +43,7 @@ class ProductRequest extends FormRequest
                 'quantity' => 'sometimes|required|integer|min:0',
                 'category_id' => 'sometimes|required|integer',
                 'brand_id' => 'sometimes|required|integer',
-                'image' => 'sometimes|nullable|file|image|max:2048',
+                'image' => 'sometimes|nullable|string|max:500',
                 'is_active' => 'sometimes|nullable|boolean',
             ];
         }

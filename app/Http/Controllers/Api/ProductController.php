@@ -61,7 +61,10 @@ class ProductController extends Controller
     public function store(ProductRequest $request)
     {
         $data = $request->validated();
+
+        // Xử lý ảnh: có thể là file upload hoặc URL string
         if ($request->hasFile('image')) {
+            // Trường hợp upload file (multipart/form-data)
             $path = $request->file('image')->store('products', 's3');
             if (!$path) {
                 Log::error("S3 Upload Failed: Product image could not be stored.");
@@ -71,6 +74,9 @@ class ProductController extends Controller
                 ], 500);
             }
             $data['image'] = $path;
+        } elseif ($request->has('image') && is_string($request->image)) {
+            // Trường hợp gửi URL string (JSON)
+            $data['image'] = $request->image;
         }
 
         $product = Product::create($data);
@@ -105,8 +111,9 @@ class ProductController extends Controller
 
         $data = $request->validated();
 
-        // Logic xử lý file ảnh
+        // Logic xử lý ảnh: file upload hoặc URL string
         if ($request->hasFile('image')) {
+            // Trường hợp upload file mới (multipart/form-data)
             // Xóa ảnh cũ khỏi S3
             if ($product->image) {
                 Storage::disk('s3')->delete($product->image);
@@ -121,6 +128,9 @@ class ProductController extends Controller
                 ], 500);
             }
             $data['image'] = $path;
+        } elseif ($request->has('image') && is_string($request->image)) {
+            // Trường hợp cập nhật URL string (JSON)
+            $data['image'] = $request->image;
         }
 
         $product->update($data);
