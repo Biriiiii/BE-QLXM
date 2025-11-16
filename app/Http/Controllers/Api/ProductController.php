@@ -48,7 +48,7 @@ class ProductController extends Controller
         // Tuy nhiên, để tránh phức tạp, chúng ta chấp nhận rủi ro và dựa vào convention.
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = $request->get('per_page', 12);
+        $perPage = $request->get('per_page', 5);
         // Eager load các mối quan hệ để tránh N+1 query
         $products = $query->with(['category', 'brand'])->paginate($perPage);
 

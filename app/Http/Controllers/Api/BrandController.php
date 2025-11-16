@@ -19,9 +19,20 @@ class BrandController extends Controller
     /**
      * Lấy danh sách tất cả các Brands (GET /api/brands).
      */
+
+    // ...
+
     public function index(Request $request)
     {
-        $brands = Brand::orderBy('name')->get();
+        // 1. Lấy giá trị per_page từ request, mặc định là 5
+        $perPage = $request->get('per_page', 5);
+
+        // 2. Sắp xếp và gọi paginate() TRỰC TIẾP
+        //    Database sẽ xử lý việc phân trang
+        $brands = Brand::orderBy('name')->paginate($perPage);
+
+        // 3. Trả về BrandResource::collection
+        //    Laravel sẽ tự động bọc Paginator (bao gồm data, links, meta)
         return BrandResource::collection($brands);
     }
 
