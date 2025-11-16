@@ -25,7 +25,7 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         // 1. Lấy giá trị per_page từ request, mặc định là 5
-        $perPage = $request->get('per_page', 5);
+        $perPage = $request->get('per_page', 10);
 
         // 2. Sắp xếp và gọi paginate() TRỰC TIẾP
         //    Database sẽ xử lý việc phân trang
