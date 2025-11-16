@@ -24,7 +24,7 @@ class ProductResource extends JsonResource
             'status' => $this->status,
             // Đường dẫn lưu trữ nội bộ (internal path)
             'image' => $this->image,
-            'stock' => $this->stock,
+            'quantity' => $this->quantity,
             'description' => $this->description,
             // Trả về link public S3 nếu có ảnh
             'image_url' => $this->image
