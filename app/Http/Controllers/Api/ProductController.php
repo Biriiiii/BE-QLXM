@@ -62,6 +62,12 @@ class ProductController extends Controller
     {
         $data = $request->validated();
 
+        // Map quantity -> stock cho database
+        if (isset($data['quantity'])) {
+            $data['stock'] = $data['quantity'];
+            unset($data['quantity']);
+        }
+
         // Xử lý ảnh: có thể là file upload hoặc URL string
         if ($request->hasFile('image')) {
             // Trường hợp upload file (multipart/form-data)
@@ -110,6 +116,12 @@ class ProductController extends Controller
         }
 
         $data = $request->validated();
+
+        // Map quantity -> stock cho database
+        if (isset($data['quantity'])) {
+            $data['stock'] = $data['quantity'];
+            unset($data['quantity']);
+        }
 
         // Logic xử lý ảnh: file upload hoặc URL string
         if ($request->hasFile('image')) {

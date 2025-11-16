@@ -22,9 +22,10 @@ class ProductResource extends JsonResource
             'category_id' => $this->category_id,
             'price' => $this->price,
             'status' => $this->status,
+            'quantity' => $this->stock, // Map stock -> quantity cho API response
             // Đường dẫn lưu trữ nội bộ (internal path)
             'image' => $this->image,
-            'quantity' => $this->quantity,
+            'stock' => $this->stock,
             'description' => $this->description,
             // Trả về link public S3 nếu có ảnh
             'image_url' => $this->image
