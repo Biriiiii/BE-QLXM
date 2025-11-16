@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name', 100);
             $table->string('description')->nullable();
-            $table->string('country', 100)->nullable();
+            $table->string('country', 100)->nullable()->index();
             $table->string('logo')->nullable();
             $table->timestamps();
         });
