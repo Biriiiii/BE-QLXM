@@ -50,7 +50,7 @@ class ProductRequest extends FormRequest
 
         // Quy tắc cho PUT/PATCH (cập nhật)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            $productId = $this->route('id'); // Lấy ID từ route parameter
+            $productId = $this->route('product') ?? $this->route('id'); // Lấy ID từ route parameter
 
             return [
                 'name' => [
