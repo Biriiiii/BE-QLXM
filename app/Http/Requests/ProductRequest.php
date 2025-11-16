@@ -20,31 +20,31 @@ class ProductRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Quy tắc mặc định cho POST (tạo mới)
+        // Quy tắc đơn giản cho POST (tạo mới)
         if ($this->isMethod('post')) {
             return [
-                'name' => 'required|string|min:2|max:255|unique:products,name',
-                'description' => 'nullable|string|max:2000',
+                'name' => 'required|string|min:3|max:100',
+                'description' => 'nullable|string|max:1000',
                 'price' => 'required|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'status' => 'nullable|in:active,inactive,draft',
-                'category_id' => 'required|integer|exists:categories,id',
-                'brand_id' => 'required|integer|exists:brands,id',
-                'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+                'quantity' => 'required|integer|min:0',
+                'category_id' => 'required|integer',
+                'brand_id' => 'required|integer',
+                'image' => 'nullable|file|image|max:2048', // File upload
+                'is_active' => 'nullable|boolean',
             ];
-        }        // Quy tắc cho PUT/PATCH (cập nhật)
-        if ($this->isMethod('put') || $this->isMethod('patch')) {
-            $productId = $this->route('product') ?? $this->route('id'); // Lấy ID từ route parameter
+        }
 
+        // Quy tắc đơn giản cho PUT/PATCH (cập nhật)
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
             return [
-                'name' => 'sometimes|required|string|min:2|max:255|unique:products,name,' . $productId,
-                'description' => 'sometimes|nullable|string|max:2000',
+                'name' => 'sometimes|required|string|min:3|max:100',
+                'description' => 'sometimes|nullable|string|max:1000',
                 'price' => 'sometimes|required|numeric|min:0',
-                'stock' => 'sometimes|required|integer|min:0',
-                'status' => 'sometimes|nullable|in:active,inactive,draft',
-                'category_id' => 'sometimes|required|integer|exists:categories,id',
-                'brand_id' => 'sometimes|required|integer|exists:brands,id',
-                'image' => 'sometimes|nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+                'quantity' => 'sometimes|required|integer|min:0',
+                'category_id' => 'sometimes|required|integer',
+                'brand_id' => 'sometimes|required|integer',
+                'image' => 'sometimes|nullable|file|image|max:2048',
+                'is_active' => 'sometimes|nullable|boolean',
             ];
         }
 
@@ -58,24 +58,20 @@ class ProductRequest extends FormRequest
     {
         return [
             'name.required' => 'Tên sản phẩm là bắt buộc.',
-            'name.unique' => 'Tên sản phẩm này đã tồn tại.',
-            'name.min' => 'Tên sản phẩm quá ngắn (tối thiểu 2 ký tự).',
-            'name.max' => 'Tên sản phẩm quá dài (tối đa 255 ký tự).',
-            'description.max' => 'Mô tả quá dài (tối đa 2000 ký tự).',
+            'name.min' => 'Tên sản phẩm quá ngắn (tối thiểu 3 ký tự).',
+            'name.max' => 'Tên sản phẩm quá dài (tối đa 100 ký tự).',
             'price.required' => 'Giá bán là bắt buộc.',
             'price.numeric' => 'Giá bán phải là số.',
             'price.min' => 'Giá bán phải lớn hơn hoặc bằng 0.',
-            'stock.required' => 'Số lượng tồn kho là bắt buộc.',
-            'stock.integer' => 'Số lượng tồn kho phải là số nguyên.',
-            'stock.min' => 'Số lượng tồn kho phải lớn hơn hoặc bằng 0.',
-            'status.in' => 'Trạng thái phải là: active, inactive hoặc draft.',
-            'category_id.required' => 'Danh mục sản phẩm là bắt buộc.',
-            'category_id.exists' => 'Danh mục được chọn không tồn tại.',
+            'quantity.required' => 'Số lượng là bắt buộc.',
+            'quantity.integer' => 'Số lượng phải là số nguyên.',
+            'quantity.min' => 'Số lượng phải lớn hơn hoặc bằng 0.',
+            'category_id.required' => 'Danh mục là bắt buộc.',
+            'category_id.integer' => 'Danh mục phải là số nguyên.',
             'brand_id.required' => 'Thương hiệu là bắt buộc.',
-            'brand_id.exists' => 'Thương hiệu được chọn không tồn tại.',
+            'brand_id.integer' => 'Thương hiệu phải là số nguyên.',
             'image.image' => 'File phải là hình ảnh.',
-            'image.mimes' => 'Hình ảnh phải có định dạng: jpeg, jpg, png, webp.',
-            'image.max' => 'Kích thước hình ảnh tối đa 2MB.',
+            'image.max' => 'Hình ảnh không được vượt quá 2MB.',
         ];
     }
 }
