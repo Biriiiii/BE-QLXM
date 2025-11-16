@@ -20,6 +20,14 @@ class BrandRequest extends FormRequest
      */
     public function rules(): array
     {
+        // 1. TỐI ƯU: Quy tắc chung cho file logo
+        $logoRules = [
+            'nullable', // Cho phép để trống (không up logo)
+            'image',    // Phải là file ảnh
+            'mimes:jpg,jpeg,png,webp,gif', // Chỉ định rõ loại file
+            'max:2048', // Tối đa 2MB (2048 KB)
+        ];
+
         // Quy tắc mặc định cho POST (tạo mới)
         if ($this->isMethod('post')) {
             return [
@@ -28,34 +36,36 @@ class BrandRequest extends FormRequest
                     'string',
                     'min:2',
                     'max:50',
-                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
-                    Rule::unique('brands', 'name') // Tên thương hiệu không được trùng
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/',
+                    Rule::unique('brands', 'name')
                 ],
                 'description' => 'nullable|string|max:255',
                 'country' => 'nullable|string|max:100',
-                'logo' => 'nullable|string|max:500', // URL logo
+
+                // 2. SỬA LỖI: Áp dụng quy tắc ảnh
+                'logo' => $logoRules,
             ];
         }
 
         // Quy tắc cho PUT/PATCH (cập nhật)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            // Lấy ID brand từ route (ví dụ: /api/brands/123)
             $brandId = $this->route('brand'); // Tên tham số trên route
 
             return [
                 'name' => [
-                    'sometimes', // Chỉ validate nếu trường 'name' được gửi lên
+                    'sometimes',
                     'required',
                     'string',
                     'min:2',
                     'max:50',
-                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch
-                    // Khi update, kiểm tra unique nhưng bỏ qua chính nó
+                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_]+$/',
                     Rule::unique('brands', 'name')->ignore($brandId)
                 ],
                 'description' => 'sometimes|nullable|string|max:255',
                 'country' => 'sometimes|nullable|string|max:100',
-                'logo' => 'sometimes|nullable|string|max:500',
+
+                // 2. SỬA LỖI: Áp dụng quy tắc ảnh
+                'logo' => $logoRules,
             ];
         }
 
@@ -75,7 +85,11 @@ class BrandRequest extends FormRequest
             'name.regex' => 'Tên thương hiệu chỉ được chứa chữ cái, số, khoảng trắng và dấu gạch.',
             'description.max' => 'Mô tả quá dài (tối đa 255 ký tự).',
             'country.max' => 'Tên quốc gia quá dài (tối đa 100 ký tự).',
-            'logo.max' => 'URL logo quá dài (tối đa 500 ký tự).',
+
+            // 3. THÊM: Thông báo lỗi cho quy tắc logo
+            'logo.image' => 'File tải lên phải là hình ảnh.',
+            'logo.mimes' => 'Chỉ chấp nhận ảnh định dạng: jpg, jpeg, png, webp, gif.',
+            'logo.max' => 'Hình ảnh không được vượt quá 2MB.',
         ];
     }
 }
