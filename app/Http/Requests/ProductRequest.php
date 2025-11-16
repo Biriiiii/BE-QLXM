@@ -26,58 +26,45 @@ class ProductRequest extends FormRequest
                 'name' => [
                     'required',
                     'string',
-                    'min:3',
-                    'max:100',
-                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_\.]+$/', // Chỉ cho phép chữ, số, khoảng trắng, dấu gạch, dấu chấm
+                    'min:2',
+                    'max:255',
                     Rule::unique('products', 'name') // Tên sản phẩm không được trùng
                 ],
-                'description' => 'nullable|string|max:1000',
-                'price' => 'required|numeric|min:0|max:999999999.99',
-                'cost_price' => 'nullable|numeric|min:0|max:999999999.99',
-                'quantity' => 'required|integer|min:0',
+                'description' => 'nullable|string|max:2000',
+                'price' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'status' => 'nullable|in:active,inactive,draft',
                 'category_id' => [
                     'required',
                     'integer',
-                    Rule::exists('categories', 'id') // Kiểm tra category có tồn tại
+                    Rule::exists('categories', 'id')
                 ],
                 'brand_id' => [
                     'required',
                     'integer',
-                    Rule::exists('brands', 'id') // Kiểm tra brand có tồn tại
+                    Rule::exists('brands', 'id')
                 ],
-                'image' => 'nullable|string|max:500', // URL hình ảnh
-                'sku' => [
-                    'nullable',
-                    'string',
-                    'max:50',
-                    'alpha_num',
-                    Rule::unique('products', 'sku') // SKU không được trùng
-                ],
-                'is_active' => 'nullable|boolean',
-                'weight' => 'nullable|numeric|min:0|max:99999.99',
-                'dimensions' => 'nullable|string|max:100',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048', // File upload
             ];
         }
 
         // Quy tắc cho PUT/PATCH (cập nhật)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            // Lấy ID product từ route (ví dụ: /api/products/123)
-            $productId = $this->route('product'); // Tên tham số trên route
+            $productId = $this->route('id'); // Lấy ID từ route parameter
 
             return [
                 'name' => [
                     'sometimes',
                     'required',
                     'string',
-                    'min:3',
-                    'max:100',
-                    'regex:/^[a-zA-ZÀ-ỹ0-9\s\-\_\.]+$/',
+                    'min:2',
+                    'max:255',
                     Rule::unique('products', 'name')->ignore($productId)
                 ],
-                'description' => 'sometimes|nullable|string|max:1000',
-                'price' => 'sometimes|required|numeric|min:0|max:999999999.99',
-                'cost_price' => 'sometimes|nullable|numeric|min:0|max:999999999.99',
-                'quantity' => 'sometimes|required|integer|min:0',
+                'description' => 'sometimes|nullable|string|max:2000',
+                'price' => 'sometimes|required|numeric|min:0',
+                'stock' => 'sometimes|required|integer|min:0',
+                'status' => 'sometimes|nullable|in:active,inactive,draft',
                 'category_id' => [
                     'sometimes',
                     'required',
@@ -90,18 +77,7 @@ class ProductRequest extends FormRequest
                     'integer',
                     Rule::exists('brands', 'id')
                 ],
-                'image' => 'sometimes|nullable|string|max:500',
-                'sku' => [
-                    'sometimes',
-                    'nullable',
-                    'string',
-                    'max:50',
-                    'alpha_num',
-                    Rule::unique('products', 'sku')->ignore($productId)
-                ],
-                'is_active' => 'sometimes|nullable|boolean',
-                'weight' => 'sometimes|nullable|numeric|min:0|max:99999.99',
-                'dimensions' => 'sometimes|nullable|string|max:100',
+                'image' => 'sometimes|nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             ];
         }
 
@@ -116,30 +92,23 @@ class ProductRequest extends FormRequest
         return [
             'name.required' => 'Tên sản phẩm là bắt buộc.',
             'name.unique' => 'Tên sản phẩm này đã tồn tại.',
-            'name.min' => 'Tên sản phẩm quá ngắn (tối thiểu 3 ký tự).',
-            'name.max' => 'Tên sản phẩm quá dài (tối đa 100 ký tự).',
-            'name.regex' => 'Tên sản phẩm chỉ được chứa chữ cái, số, khoảng trắng và các ký tự đặc biệt cơ bản.',
-            'description.max' => 'Mô tả quá dài (tối đa 1000 ký tự).',
+            'name.min' => 'Tên sản phẩm quá ngắn (tối thiểu 2 ký tự).',
+            'name.max' => 'Tên sản phẩm quá dài (tối đa 255 ký tự).',
+            'description.max' => 'Mô tả quá dài (tối đa 2000 ký tự).',
             'price.required' => 'Giá bán là bắt buộc.',
             'price.numeric' => 'Giá bán phải là số.',
             'price.min' => 'Giá bán phải lớn hơn hoặc bằng 0.',
-            'price.max' => 'Giá bán quá lớn.',
-            'cost_price.numeric' => 'Giá nhập phải là số.',
-            'cost_price.min' => 'Giá nhập phải lớn hơn hoặc bằng 0.',
-            'quantity.required' => 'Số lượng là bắt buộc.',
-            'quantity.integer' => 'Số lượng phải là số nguyên.',
-            'quantity.min' => 'Số lượng phải lớn hơn hoặc bằng 0.',
-            'category_id.required' => 'Danh mục là bắt buộc.',
-            'category_id.exists' => 'Danh mục không tồn tại.',
+            'stock.required' => 'Số lượng tồn kho là bắt buộc.',
+            'stock.integer' => 'Số lượng tồn kho phải là số nguyên.',
+            'stock.min' => 'Số lượng tồn kho phải lớn hơn hoặc bằng 0.',
+            'status.in' => 'Trạng thái phải là: active, inactive hoặc draft.',
+            'category_id.required' => 'Danh mục sản phẩm là bắt buộc.',
+            'category_id.exists' => 'Danh mục được chọn không tồn tại.',
             'brand_id.required' => 'Thương hiệu là bắt buộc.',
-            'brand_id.exists' => 'Thương hiệu không tồn tại.',
-            'image.max' => 'URL hình ảnh quá dài (tối đa 500 ký tự).',
-            'sku.unique' => 'Mã SKU này đã tồn tại.',
-            'sku.alpha_num' => 'Mã SKU chỉ được chứa chữ cái và số.',
-            'sku.max' => 'Mã SKU quá dài (tối đa 50 ký tự).',
-            'weight.numeric' => 'Trọng lượng phải là số.',
-            'weight.min' => 'Trọng lượng phải lớn hơn hoặc bằng 0.',
-            'dimensions.max' => 'Kích thước quá dài (tối đa 100 ký tự).',
+            'brand_id.exists' => 'Thương hiệu được chọn không tồn tại.',
+            'image.image' => 'File phải là hình ảnh.',
+            'image.mimes' => 'Hình ảnh phải có định dạng: jpeg, jpg, png, webp.',
+            'image.max' => 'Kích thước hình ảnh tối đa 2MB.',
         ];
     }
 }
