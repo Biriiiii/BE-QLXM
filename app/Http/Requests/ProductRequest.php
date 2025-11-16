@@ -23,60 +23,27 @@ class ProductRequest extends FormRequest
         // Quy tắc mặc định cho POST (tạo mới)
         if ($this->isMethod('post')) {
             return [
-                'name' => [
-                    'required',
-                    'string',
-                    'min:2',
-                    'max:255',
-                    Rule::unique('products', 'name') // Tên sản phẩm không được trùng
-                ],
+                'name' => 'required|string|min:2|max:255|unique:products,name',
                 'description' => 'nullable|string|max:2000',
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'status' => 'nullable|in:active,inactive,draft',
-                'category_id' => [
-                    'required',
-                    'integer',
-                    Rule::exists('categories', 'id')
-                ],
-                'brand_id' => [
-                    'required',
-                    'integer',
-                    Rule::exists('brands', 'id')
-                ],
-                'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048', // File upload
+                'category_id' => 'required|integer|exists:categories,id',
+                'brand_id' => 'required|integer|exists:brands,id',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             ];
-        }
-
-        // Quy tắc cho PUT/PATCH (cập nhật)
+        }        // Quy tắc cho PUT/PATCH (cập nhật)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
             $productId = $this->route('product') ?? $this->route('id'); // Lấy ID từ route parameter
 
             return [
-                'name' => [
-                    'sometimes',
-                    'required',
-                    'string',
-                    'min:2',
-                    'max:255',
-                    Rule::unique('products', 'name')->ignore($productId)
-                ],
+                'name' => 'sometimes|required|string|min:2|max:255|unique:products,name,' . $productId,
                 'description' => 'sometimes|nullable|string|max:2000',
                 'price' => 'sometimes|required|numeric|min:0',
                 'stock' => 'sometimes|required|integer|min:0',
                 'status' => 'sometimes|nullable|in:active,inactive,draft',
-                'category_id' => [
-                    'sometimes',
-                    'required',
-                    'integer',
-                    Rule::exists('categories', 'id')
-                ],
-                'brand_id' => [
-                    'sometimes',
-                    'required',
-                    'integer',
-                    Rule::exists('brands', 'id')
-                ],
+                'category_id' => 'sometimes|required|integer|exists:categories,id',
+                'brand_id' => 'sometimes|required|integer|exists:brands,id',
                 'image' => 'sometimes|nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             ];
         }
