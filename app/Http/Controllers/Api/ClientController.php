@@ -49,7 +49,8 @@ class ClientController extends Controller
         if ($request->filled('category_id')) $query->where('category_id', $request->category_id);
         if ($request->filled('search')) $query->where('name', 'like', '%' . $request->search . '%');
 
-        return ProductResource::collection($query->paginate(10));
+        $perPage = $request->get('per_page', 10);
+        return ProductResource::collection($query->paginate($perPage));
     }
 
     public function getProduct($id)
