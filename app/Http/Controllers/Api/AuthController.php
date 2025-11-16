@@ -7,6 +7,7 @@ use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Http\Resources\UserResource; // 👈 1. Import Resource
 
 class AuthController extends Controller
 {
@@ -21,12 +22,18 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('api')->plainTextToken;
-        return response()->json(['user' => $user, 'token' => $token]);
+
+        // 👈 2. Sử dụng UserResource để trả về
+        return response()->json([
+            'user' => new UserResource($user), // Chỉ trả về các trường đã định nghĩa
+            'token' => $token
+        ]);
     }
 
     public function me(Request $request)
     {
-        return $request->user();
+        // 👈 3. Sử dụng UserResource ở đây để nhất quán
+        return new UserResource($request->user());
     }
 
     public function logout(Request $request)
