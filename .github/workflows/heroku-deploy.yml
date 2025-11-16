@@ -24,7 +24,7 @@ jobs:
         run: composer install --no-dev --prefer-dist --no-progress
 
       - name: Run Tests
-        run: php artisan test
+        run: vendor/bin/phpunit --testdox
 
   deploy-to-heroku:
     name: Deploy to Heroku
