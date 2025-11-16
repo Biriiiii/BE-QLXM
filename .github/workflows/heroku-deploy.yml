@@ -1,0 +1,73 @@
+# Tên của quy trình CI/CD
+name: CI/CD Pipeline for Heroku
+
+# KHI NÀO CẦN CHẠY:
+on:
+  # 1. Chạy khi có code được ĐẨY (push) lên nhánh "main"
+  push:
+    branches: [ "main" ]
+  # 2. Chạy khi có ai đó tạo YÊU CẦU GỘP (Pull Request) vào nhánh "main"
+  pull_request:
+    branches: [ "main" ]
+
+# CÁC CÔNG VIỆC CẦN LÀM (JOBS):
+jobs:
+  # ----------------------------------------------------
+  # JOB 1: CHẠY KIỂM THỬ (CI)
+  # ----------------------------------------------------
+  build-and-test:
+    # Tên hiển thị trên GitHub
+    name: Build & Test
+    # Chạy trên một máy ảo Ubuntu mới nhất
+    runs-on: ubuntu-latest
+
+    steps:
+      # Bước 1.1: Lấy mã nguồn mới nhất về máy ảo
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # Bước 1.2: Cài đặt môi trường (Ví dụ cho PHP/Laravel)
+      # (GHI CHÚ: Hãy thay đổi bước này cho phù hợp với dự án của bạn)
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1' # Thay bằng phiên bản PHP của bạn
+          extensions: mbstring, dom, fileinfo, mysql # Các extension cần thiết
+          
+      # Bước 1.3: Cài đặt các thư viện (ví dụ: composer)
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --no-progress
+
+      # Bước 1.4: Chạy kiểm thử (nếu có)
+      - name: Run Tests (ví dụ: PEST hoặc PHPUnit)
+        run: php artisan test # Nếu bạn có thiết lập test
+
+  # ----------------------------------------------------
+  # JOB 2: TRIỂN KHAI LÊN HEROKU (CD)
+  # ----------------------------------------------------
+  deploy-to-heroku:
+    # Tên hiển thị
+    name: Deploy to Heroku
+    runs-on: ubuntu-latest
+    
+    # ĐIỀU KIỆN:
+    # 1. Job này "needs" (cần) job "build-and-test" chạy thành công
+    needs: build-and-test 
+    # 2. Chỉ chạy khi event là "push" lên nhánh "main"
+    # (Tức là không chạy khi là Pull Request)
+    if: github.event_name == 'push'
+
+    steps:
+      # Bước 2.1: Lấy mã nguồn về
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # Bước 2.2: Thực hiện triển khai lên Heroku
+      - name: Deploy to Heroku
+        # Sử dụng một "Action" (công cụ) có sẵn
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          # Sử dụng các "secret" bạn đã lưu ở Bước 2
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
+          heroku_email: "bangeabar@gmail.com"
