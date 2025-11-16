@@ -27,7 +27,6 @@ jobs:
         uses: actions/checkout@v3
 
       # Bước 1.2: Cài đặt môi trường (Ví dụ cho PHP/Laravel)
-      # (GHI CHÚ: Hãy thay đổi bước này cho phù hợp với dự án của bạn)
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -54,7 +53,6 @@ jobs:
     # 1. Job này "needs" (cần) job "build-and-test" chạy thành công
     needs: build-and-test 
     # 2. Chỉ chạy khi event là "push" lên nhánh "main"
-    # (Tức là không chạy khi là Pull Request)
     if: github.event_name == 'push'
 
     steps:
@@ -64,7 +62,6 @@ jobs:
 
       # Bước 2.2: Thực hiện triển khai lên Heroku
       - name: Deploy to Heroku
-        # Sử dụng một "Action" (công cụ) có sẵn
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
           # Sử dụng các "secret" bạn đã lưu ở Bước 2
