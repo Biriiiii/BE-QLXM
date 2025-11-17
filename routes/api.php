@@ -64,6 +64,7 @@ Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
     Route::get('orders/{id}', [OrderController::class, 'show'])->whereNumber('id');
+    Route::get('customers/{customerId}/orders', [OrderController::class, 'getCustomerOrders'])->whereNumber('customerId');
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->whereNumber('id');
     Route::delete('orders/{id}', [OrderController::class, 'destroy'])->whereNumber('id');
 
