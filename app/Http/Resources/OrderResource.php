@@ -11,15 +11,13 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'order_code' => 'ORD-' . str_pad($this->id, 6, '0', STR_PAD_LEFT),
-            'customer' => $this->whenLoaded('customer', function () {
-                return [
-                    'id' => $this->customer->id,
-                    'name' => $this->customer->name,
-                    'phone' => $this->customer->phone,
-                    'email' => $this->customer->email,
-                    'address' => $this->customer->address,
-                ];
-            }),
+            'customer' => [
+                'id' => $this->customer->id,
+                'name' => $this->customer->name,
+                'phone' => $this->customer->phone,
+                'email' => $this->customer->email,
+                'address' => $this->customer->address,
+            ],
             'order_date' => $this->order_date?->format('d/m/Y H:i'),
             'order_date_iso' => $this->order_date,
             'status' => $this->status,
