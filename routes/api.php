@@ -9,7 +9,8 @@ use App\Http\Controllers\Api\{
     ProductController,
     CustomerController,
     OrderController,
-    ClientController
+    ClientController,
+    StatsController
 };
 
 // ------------------- TEST & AUTH (public) -------------------
@@ -52,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ------------------- ADMIN & STAFF (cần auth + role:admin,staff) -------------------
 Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
+    Route::get('stats', [StatsController::class, 'index']);
 
     // Users (Tất cả hành động CRUD)
     Route::apiResource('users', UserController::class)
