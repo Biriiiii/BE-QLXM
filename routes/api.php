@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum', 'role:admin,staff'])->group(function () {
     // CRUD Resources (Categories, Brands, Products, Customers)
     Route::apiResource('categories', CategoryController::class)
         ->parameters(['categories' => 'id']);
-
+    Route::post('brands/{id}', [BrandController::class, 'update'])->whereNumber('id');
     Route::apiResource('brands', BrandController::class)
         ->parameters(['brands' => 'id']);
 
