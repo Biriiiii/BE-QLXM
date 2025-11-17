@@ -49,7 +49,7 @@ class BrandRequest extends FormRequest
 
         // Quy tắc cho PUT/PATCH (cập nhật)
         if ($this->isMethod('put') || $this->isMethod('patch')) {
-            $brandId = $this->route('brand'); // Tên tham số trên route
+            $brandId = $this->route('id'); // Lấy từ route parameter 'id'
 
             return [
                 'name' => [

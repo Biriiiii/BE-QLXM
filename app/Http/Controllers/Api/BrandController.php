@@ -88,13 +88,16 @@ class BrandController extends Controller
                 'message' => 'Brand not found'
             ], 404);
         }
+
         $data = $request->validated();
+
+        // Xử lý logo
         if ($request->hasFile('logo')) {
-            // Bước 1: Xóa logo cũ
+            // Xóa logo cũ nếu có
             if ($brand->logo) {
                 Storage::disk('s3')->delete($brand->logo);
             }
-            // Bước 2: Tải logo mới lên
+            // Upload logo mới
             $path = $request->file('logo')->store('brands', 's3');
             if (!$path) {
                 Log::error("S3 Upload Failed: Brand logo update could not be stored.");
@@ -104,10 +107,17 @@ class BrandController extends Controller
                 ], 500);
             }
             $data['logo'] = $path;
+        } elseif ($request->has('logo') && is_string($request->logo)) {
+            // Trường hợp gửi URL string
+            $data['logo'] = $request->logo;
         }
 
-        // Bước 3: Cập nhật thông tin Brand trong DB
+        // Cập nhật brand
         $brand->update($data);
+
+        // Refresh để lấy dữ liệu mới nhất
+        $brand->refresh();
+
         return new BrandResource($brand);
     }
 
