@@ -154,22 +154,6 @@ class OrderController extends Controller
     }
 
     /**
-     * Lấy tất cả đơn hàng của một khách hàng.
-     *
-     * @param int $customerId
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
-     */
-    public function getCustomerOrders($customerId)
-    {
-        $orders = Order::with(['items.product', 'customer'])
-            ->where('customer_id', $customerId)
-            ->latest()
-            ->paginate(15);
-
-        return OrderResource::collection($orders);
-    }
-
-    /**
      * Cập nhật trạng thái đơn hàng.
      *
      * @param OrderStatusRequest $request
